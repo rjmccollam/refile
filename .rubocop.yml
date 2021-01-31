@@ -1,14 +1,26 @@
+AllCops:
+  Exclude:
+    - 'gemfiles/**/*'
+    - 'vendor/**/*'
+  DisplayCopNames: true
+
 Metrics/LineLength:
   Max: 150 # TODO: we should decrease this to 120
 
 Metrics/ClassLength:
   Max: 300
 
+Metrics/ModuleLength:
+  Max: 300
+
+Metrics/BlockLength:
+  Max: 500
+
 Metrics/MethodLength:
-  Max: 25
+  Max: 100
 
 Metrics/ParameterLists:
-  Max: 8
+  Max: 10
 
 Metrics/AbcSize:
   Enabled: false
@@ -19,7 +31,7 @@ Metrics/CyclomaticComplexity:
 Metrics/PerceivedComplexity:
   Enabled: false
 
-Style/AlignParameters:
+Layout/AlignParameters:
   EnforcedStyle: with_fixed_indentation
 
 Style/StringLiterals:
@@ -27,6 +39,12 @@ Style/StringLiterals:
 
 Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
+
+Layout/ClosingParenthesisIndentation:
+  Enabled: false
+
+Style/OneLineConditional:
+  Enabled: false
 
 Style/AndOr:
   Enabled: false
@@ -37,8 +55,8 @@ Style/Not:
 Documentation:
   Enabled: false # TODO: Enable again once we have more docs
 
-Style/CaseIndentation:
-  IndentWhenRelativeTo: case
+Layout/CaseIndentation:
+  EnforcedStyle: case
   SupportedStyles:
     - case
     - end
@@ -49,20 +67,53 @@ Style/PercentLiteralDelimiters:
     '%w': "[]"
     '%W': "[]"
 
-Style/AccessModifierIndentation:
+Layout/AccessModifierIndentation:
   EnforcedStyle: outdent
 
 Style/SignalException:
   Enabled: false
 
-Style/IndentationWidth:
+Layout/IndentationWidth:
   Enabled: false
 
+Style/TrivialAccessors:
+  ExactNameMatch: true
+
 Lint/EndAlignment:
-  AlignWith: variable
+  EnforcedStyleAlignWith: variable
 
 Lint/DefEndAlignment:
   Enabled: false
 
 Lint/HandleExceptions:
+  Enabled: false
+
+Style/SpecialGlobalVars:
+  Enabled: false
+
+Style/TrivialAccessors:
+  Enabled: false
+
+Style/SymbolArray:
+  Enabled: false
+
+Style/EmptyMethod:
+  Enabled: false
+
+Bundler/OrderedGems:
+  Enabled: false
+
+Lint/AmbiguousBlockAssociation:
+  Enabled: false
+
+Performance/RedundantMerge:
+  Enabled: false
+
+Style/MutableConstant:
+  Enabled: false
+
+Style/GuardClause:
+  Enabled: false
+
+Layout/MultilineMethodCallBraceLayout:
   Enabled: false

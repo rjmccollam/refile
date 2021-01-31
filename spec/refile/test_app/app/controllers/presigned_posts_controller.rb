@@ -4,7 +4,7 @@ class PresignedPostsController < ApplicationController
   end
 
   def create
-    @post = Post.new(params.require(:post).permit(:title, :document))
+    @post = Post.new(params.require(:post).permit(:title, :document, documents_files: []))
 
     if @post.save
       redirect_to [:normal, @post]
@@ -13,19 +13,18 @@ class PresignedPostsController < ApplicationController
     end
   end
 
-  # rubocop:disable Metrics/AbcSize
   def upload
     if params[:token] == "xyz123"
       if params[:file].size < 100
         File.open(File.join(Refile.backends["limited_cache"].directory, params[:id]), "wb") do |file|
           file.write(params[:file].read)
         end
-        render text: "token accepted"
+        render plain: "token accepted"
       else
-        render text: "too large", status: 413
+        render plain: "too large", status: 413
       end
     else
-      render text: "token rejected", status: 403
+      render plain: "token rejected", status: 403
     end
   end
 end

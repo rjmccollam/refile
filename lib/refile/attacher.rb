@@ -1,27 +1,32 @@
 module Refile
   # @api private
   class Attacher
-    attr_reader :record, :name, :cache, :store, :options, :errors, :type, :valid_extensions, :valid_content_types
+    attr_reader :definition, :record, :errors
     attr_accessor :remove
 
     Presence = ->(val) { val if val != "" }
 
-    def initialize(record, name, cache:, store:, raise_errors: true, type: nil, extension: nil, content_type: nil)
+    def initialize(definition, record)
+      @definition = definition
       @record = record
-      @name = name
-      @raise_errors = raise_errors
-      @cache = Refile.backends.fetch(cache.to_s)
-      @store = Refile.backends.fetch(store.to_s)
-      @type = type
-      @valid_extensions = [extension].flatten if extension
-      @valid_content_types = [content_type].flatten if content_type
-      @valid_content_types ||= Refile.types.fetch(type).content_type if type
       @errors = []
       @metadata = {}
     end
 
+    def name
+      @definition.name
+    end
+
+    def cache
+      @definition.cache
+    end
+
+    def store
+      @definition.store
+    end
+
     def id
-      Presence[read(:id)]
+      Presence[read(:id, true)]
     end
 
     def size
@@ -58,7 +63,9 @@ module Refile
     end
 
     def get
-      if cache_id
+      if remove?
+        nil
+      elsif cache_id
         cache.get(cache_id)
       elsif id
         store.get(id)
@@ -66,17 +73,21 @@ module Refile
     end
 
     def set(value)
-      if value.is_a?(String)
-        retrieve!(value)
-      else
-        cache!(value)
+      self.remove = false
+      case value
+        when nil then self.remove = true
+        when String, Hash then retrieve!(value)
+        else cache!(value)
       end
     end
 
     def retrieve!(value)
-      @metadata = JSON.parse(value, symbolize_names: true) || {}
+      if value.is_a?(String)
+        @metadata = Refile.parse_json(value, symbolize_names: true) || {}
+      elsif value.is_a?(Hash)
+        @metadata = value
+      end
       write_metadata if cache_id
-    rescue JSON::ParserError
     end
 
     def cache!(uploadable)
@@ -88,41 +99,42 @@ module Refile
       if valid?
         @metadata[:id] = cache.upload(uploadable).id
         write_metadata
-      elsif @raise_errors
+      elsif @definition.raise_errors?
         raise Refile::Invalid, @errors.join(", ")
       end
     end
 
     def download(url)
       unless url.to_s.empty?
-        response = RestClient::Request.new(method: :get, url: url, raw_response: true).execute
+        download = Refile::Download.new(url)
         @metadata = {
-          size: response.file.size,
-          filename: ::File.basename(url),
-          content_type: response.headers[:content_type]
+          size: download.size,
+          filename: download.original_filename,
+          content_type: download.content_type
         }
         if valid?
-          @metadata[:id] = cache.upload(response.file).id
+          @metadata[:id] = cache.upload(download.io).id
           write_metadata
-        elsif @raise_errors
+        elsif @definition.raise_errors?
           raise Refile::Invalid, @errors.join(", ")
         end
       end
-    rescue RestClient::Exception
+    rescue Refile::Error
       @errors = [:download_failed]
-      raise if @raise_errors
+      raise if @definition.raise_errors?
     end
 
     def store!
       if remove?
         delete!
-        write(:id, nil)
+        write(:id, nil, true)
+        remove_metadata
       elsif cache_id
         file = store.upload(get)
         delete!
-        write(:id, file.id)
+        write(:id, file.id, true)
+        write_metadata
       end
-      write_metadata
       @metadata = {}
     end
 
@@ -130,14 +142,6 @@ module Refile
       cache.delete(cache_id) if cache_id
       store.delete(id) if id
       @metadata = {}
-    end
-
-    def accept
-      if valid_content_types
-        valid_content_types.join(",")
-      elsif valid_extensions
-        valid_extensions.map { |e| ".#{e}" }.join(",")
-      end
     end
 
     def remove?
@@ -148,35 +152,39 @@ module Refile
       not @metadata.empty?
     end
 
-    def valid?
-      @errors = []
-      @errors << :invalid_extension if valid_extensions and not valid_extensions.include?(extension)
-      @errors << :invalid_content_type if valid_content_types and not valid_content_types.include?(content_type)
-      @errors << :too_large if cache.max_size and size and size >= cache.max_size
-      @errors.empty?
-    end
-
     def data
       @metadata if valid?
     end
 
+    def valid?
+      @errors = @definition.validate(self)
+      @errors.empty?
+    end
+
   private
 
-    def read(column)
+    def read(column, strict = false)
       m = "#{name}_#{column}"
-      value ||= record.send(m) if record.respond_to?(m)
+      value ||= record.send(m) if strict or record.respond_to?(m)
       value
     end
 
-    def write(column, value)
+    def write(column, value, strict = false)
+      return if record.frozen?
       m = "#{name}_#{column}="
-      record.send(m, value) if record.respond_to?(m) and not record.frozen?
+      record.send(m, value) if strict or record.respond_to?(m)
     end
 
     def write_metadata
       write(:size, size)
       write(:content_type, content_type)
       write(:filename, filename)
+    end
+
+    def remove_metadata
+      write(:size, nil)
+      write(:content_type, nil)
+      write(:filename, nil)
     end
   end
 end

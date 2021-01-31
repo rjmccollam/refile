@@ -31,7 +31,7 @@ feature "Normal HTTP Post file uploads" do
     click_button "Create"
 
     expect(page).to have_selector(".field_with_errors")
-    expect(page).to have_content("Image has an invalid file format")
+    expect(page).to have_content("You are not allowed to upload text/plain file format. Allowed types: image/jpeg, image/gif, and image/png.")
   end
 
   scenario "Fail to upload a file that has the wrong format then submit" do
@@ -41,7 +41,7 @@ feature "Normal HTTP Post file uploads" do
     click_button "Create"
 
     expect(page).to have_selector(".field_with_errors")
-    expect(page).to have_content("Image has an invalid file format")
+    expect(page).to have_content("You are not allowed to upload text/plain file format. Allowed types: image/jpeg, image/gif, and image/png.")
     click_button "Create"
     expect(page).to have_selector("h1", text: "A cool post")
     expect(page).not_to have_link("Document")
@@ -119,7 +119,9 @@ feature "Normal HTTP Post file uploads" do
   end
 
   scenario "Upload a file from a remote URL" do
-    stub_request(:get, "http://www.example.com/some_file").to_return(
+    url = "http://www.example.com/foo/bar/some_file.png?some-query-string=true"
+
+    stub_request(:get, url).to_return(
       status: 200,
       body: "abc",
       headers: {
@@ -130,13 +132,13 @@ feature "Normal HTTP Post file uploads" do
 
     visit "/normal/posts/new"
     fill_in "Title", with: "A cool post"
-    fill_in "Remote document url", with: "http://www.example.com/some_file"
+    fill_in "Remote document url", with: url
     click_button "Create"
 
     expect(page).to have_selector("h1", text: "A cool post")
     expect(download_link("Document")).to eq("abc")
     expect(page).to have_selector(".content-type", text: "image/png")
     expect(page).to have_selector(".size", text: "3")
-    expect(page).to have_selector(".filename", text: "some_file")
+    expect(page).to have_selector(".filename", text: "some_file.png")
   end
 end

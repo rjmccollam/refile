@@ -71,7 +71,26 @@ module Refile
 
       Tempfile.new(id, binmode: true).tap do |tempfile|
         IO.copy_stream(io, tempfile)
+        tempfile.rewind
+        tempfile.fsync
       end
+    end
+
+    # Rewind to beginning of file.
+    #
+    # @return [nil]
+    def rewind
+      @io = nil
+    end
+
+    # Prevent from exposing secure information unexpectedly
+    #
+    # @return [Hash]
+    def as_json
+      {
+        id: id,
+        backend: backend.to_s
+      }
     end
 
   private

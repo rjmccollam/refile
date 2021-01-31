@@ -5,8 +5,8 @@ RSpec.shared_examples_for :backend do
 
   describe "#upload" do
     it "raises ArgumentError when invalid object is uploaded" do
-      expect { backend.upload(double(size: 123)) }.to raise_error(ArgumentError)
-      expect { backend.upload("hello") }.to raise_error(ArgumentError)
+      expect { backend.upload(double(size: 123)) }.to raise_error(Refile::InvalidFile)
+      expect { backend.upload("hello") }.to raise_error(Refile::InvalidFile)
     end
 
     it "raises Refile::Invalid when object is too large" do
@@ -177,6 +177,17 @@ RSpec.shared_examples_for :backend do
       expect { file.read(1, buffer) }.to raise_error
     end
 
+    describe "#rewind" do
+      it "rewinds file to beginning" do
+        file = backend.upload(uploadable)
+
+        expect(file.read(2)).to eq("he")
+        expect(file.read(2)).to eq("ll")
+        file.rewind
+        expect(file.read(2)).to eq("he")
+      end
+    end
+
     describe "#read" do
       it "can read file contents" do
         file = backend.upload(uploadable)
@@ -202,6 +213,15 @@ RSpec.shared_examples_for :backend do
 
         expect(download).to be_an_instance_of(Tempfile)
         expect(File.read(download.path)).to eq("hello")
+      end
+    end
+
+    describe "#as_json" do
+      it "returns id and stringified backend as a Hash" do
+        file = backend.upload(uploadable)
+        hash = file.as_json
+
+        expect(hash.keys).to eq [:id, :backend]
       end
     end
   end

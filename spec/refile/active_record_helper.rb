@@ -8,9 +8,10 @@ ActiveRecord::Base.establish_connection(
   verbosity: "quiet"
 )
 
-class TestMigration < ActiveRecord::Migration
+class TestMigration < ActiveRecord::Migration[5.0]
   def self.up
     create_table :posts, force: true do |t|
+      t.integer :user_id
       t.column :title, :string
       t.column :image_id, :string
       t.column :document_id, :string
@@ -18,9 +19,17 @@ class TestMigration < ActiveRecord::Migration
       t.column :document_content_type, :string
       t.column :document_size, :integer
     end
+
+    create_table :users, force: true
+
+    create_table :documents, force: true do |t|
+      t.belongs_to :post, null: false
+      t.column :file_id, :string, null: false
+      t.column :file_filename, :string
+      t.column :file_content_type, :string
+      t.column :file_size, :integer, null: false
+    end
   end
 end
 
-quietly do
-  TestMigration.up
-end
+TestMigration.up

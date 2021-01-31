@@ -1,3 +1,4 @@
+require "yaml"
 require "rails/all"
 
 require "refile"
@@ -6,8 +7,9 @@ require "jquery/rails"
 
 module Refile
   class TestApp < Rails::Application
-    config.secret_token = "6805012ab1750f461ef3c531bdce84c0"
-    config.session_store :cookie_store, key: "_refile_session"
+    config.middleware.delete "ActionDispatch::Cookies"
+    config.middleware.delete "ActionDispatch::Session::CookieStore"
+    config.middleware.delete "ActionDispatch::Flash"
     config.active_support.deprecation = :log
     config.eager_load = false
     config.action_dispatch.show_exceptions = false
@@ -25,6 +27,7 @@ require "capybara/rails"
 require "capybara/rspec"
 require "refile/spec_helper"
 require "refile/active_record_helper"
+require "capybara/poltergeist"
 
 if ENV["SAUCE_BROWSER"]
   Capybara.register_driver :selenium do |app|
@@ -36,12 +39,11 @@ if ENV["SAUCE_BROWSER"]
   end
 end
 
+Capybara.javascript_driver = :poltergeist
+
 Capybara.configure do |config|
   config.server_port = 56_120
 end
-
-Refile.allow_origin = "*"
-Refile.host = "//localhost:56120"
 
 module TestAppHelpers
   def download_link(text)
@@ -52,7 +54,9 @@ module TestAppHelpers
         page.source.chomp
       end
     else
-      Net::HTTP.get_response(URI(url)).body.chomp
+      uri = URI(url)
+      uri.scheme ||= "http"
+      Net::HTTP.get_response(URI(uri.to_s)).body.chomp
     end
   end
 end
