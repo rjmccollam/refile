@@ -6,9 +6,7 @@ module Refile
     LOG_FORMAT = %(%s: [%s] %s "%s%s" %d %0.1fms\n)
 
     def initialize(app, prefix, logger_proc)
-      @app = app
-      @prefix = prefix
-      @logger_proc = logger_proc
+      @app, @prefix, @logger_proc = app, prefix, logger_proc
     end
 
     def call(env)

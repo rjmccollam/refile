@@ -37,8 +37,6 @@ module Refile
         IO.copy_stream(uploadable, path(id))
 
         Refile::File.new(self, id)
-      ensure
-        uploadable.close
       end
 
       # Get a file from this backend.
@@ -47,7 +45,7 @@ module Refile
       # if a file with the given id does not exist in this backend. Use
       # {FileSystem#exists?} to check if the file actually exists.
       #
-      # @param [String] id           The id of the file
+      # @param [Sring] id           The id of the file
       # @return [Refile::File]      The retrieved file
       verify_id def get(id)
         Refile::File.new(self, id)
@@ -55,7 +53,7 @@ module Refile
 
       # Delete a file from this backend
       #
-      # @param [String] id           The id of the file
+      # @param [Sring] id           The id of the file
       # @return [void]
       verify_id def delete(id)
         FileUtils.rm(path(id)) if exists?(id)
@@ -64,7 +62,7 @@ module Refile
       # Return an IO object for the uploaded file which can be used to read its
       # content.
       #
-      # @param [String] id           The id of the file
+      # @param [Sring] id           The id of the file
       # @return [IO]                An IO object containing the file contents
       verify_id def open(id)
         ::File.open(path(id), "rb")
@@ -72,7 +70,7 @@ module Refile
 
       # Return the entire contents of the uploaded file as a String.
       #
-      # @param [String] id           The id of the file
+      # @param [Sring] id           The id of the file
       # @return [String]            The file's contents
       verify_id def read(id)
         ::File.read(path(id)) if exists?(id)
@@ -80,7 +78,7 @@ module Refile
 
       # Return the size in bytes of the uploaded file.
       #
-      # @param [String] id           The id of the file
+      # @param [Sring] id           The id of the file
       # @return [Integer]           The file's size
       verify_id def size(id)
         ::File.size(path(id)) if exists?(id)
@@ -88,7 +86,7 @@ module Refile
 
       # Return whether the file with the given id exists in this backend.
       #
-      # @param [String] id           The id of the file
+      # @param [Sring] id           The id of the file
       # @return [Boolean]
       verify_id def exists?(id)
         ::File.exist?(path(id))
@@ -110,7 +108,7 @@ module Refile
 
       # Return the full path of the uploaded file with the given id.
       #
-      # @param [String] id           The id of the file
+      # @param [Sring] id           The id of the file
       # @return [String]
       verify_id def path(id)
         ::File.join(@directory, id)

@@ -27,10 +27,5 @@ module Refile
     def as_json(*)
       { as: @as, id: @id, url: @url, fields: @fields }
     end
-
-    # @return [String] the signature serialized as JSON
-    def to_json(*)
-      as_json.to_json
-    end
   end
 end

@@ -1,3 +1,4 @@
+require "active_support/logger"
 require "refile/custom_logger"
 
 describe Refile::CustomLogger do
@@ -11,10 +12,10 @@ describe Refile::CustomLogger do
       "PATH_INFO" => "/" }
   end
 
-  let(:expected_format) { %r{Prefix: \[[^\]]+\] POST "/" 200 \d+\.\d+ms\n\n$} }
+  let(:expected_format) { /^Prefix: \[[^\]]+\] POST "\/" 200 \d+\.\d+ms\n\n$/ }
 
   it "uses a dynamic logger" do
-    _, _, body = described_class.new(rack_app, "Prefix", -> { Logger.new(io) }).call(env)
+    _, _, body = described_class.new(rack_app, "Prefix", -> { ActiveSupport::Logger.new(io) }).call(env)
     body.close
     expect(io.tap(&:rewind).read).to match(expected_format)
   end

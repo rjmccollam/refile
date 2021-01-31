@@ -1,3 +1,3 @@
 module Refile
-  VERSION = "0.7.0"
+  VERSION = "0.5.5"
 end

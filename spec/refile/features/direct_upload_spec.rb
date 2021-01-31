@@ -9,7 +9,6 @@ feature "Direct HTTP post file uploads", :js do
     expect(page).to have_content("Upload started")
     expect(page).to have_content("Upload success")
     expect(page).to have_content("Upload complete")
-    expect(page).to have_content("All uploads complete")
 
     click_button "Create"
 
@@ -29,23 +28,6 @@ feature "Direct HTTP post file uploads", :js do
     expect(page).to have_content("Upload failure error")
   end
 
-  scenario "Upload a file after validation failure" do
-    visit "/direct/posts/new"
-    fill_in "Title", with: "A cool post"
-    check "Requires document"
-    click_button "Create"
-
-    attach_file "Document", path("hello.txt")
-
-    expect(page).to have_content("Upload started")
-    expect(page).to have_content("Upload success")
-    expect(page).to have_content("Upload complete")
-
-    click_button "Create"
-
-    expect(download_link("Document")).to eq("hello")
-  end
-
   scenario "Fail to upload a file that has wrong format" do
     visit "/direct/posts/new"
     fill_in "Title", with: "A cool post"
@@ -58,6 +40,6 @@ feature "Direct HTTP post file uploads", :js do
     click_button "Create"
 
     expect(page).to have_selector(".field_with_errors")
-    expect(page).to have_content("You are not allowed to upload text/plain file format. Allowed types: image/jpeg, image/gif, and image/png.")
+    expect(page).to have_content("Image has an invalid file format")
   end
 end

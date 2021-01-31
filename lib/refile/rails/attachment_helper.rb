@@ -8,12 +8,6 @@ module Refile
         self.multipart = true
         @template.attachment_field(@object_name, method, objectify_options(options))
       end
-
-      # @see AttachmentHelper#attachment_cache_field
-      def attachment_cache_field(method, options = {})
-        self.multipart = true
-        @template.attachment_cache_field(@object_name, method, objectify_options(options))
-      end
     end
 
     # View helper which generates a url for an attachment. This generates a URL
@@ -25,17 +19,11 @@ module Refile
     # @param [Refile::Attachment] object   Instance of a class which has an attached file
     # @param [Symbol] name                 The name of the attachment column
     # @param [String, nil] filename        The filename to be appended to the URL
-    # @param [String, nil] fallback        The path to an asset to be used as a fallback
     # @param [String, nil] format          A file extension to be appended to the URL
     # @param [String, nil] host            Override the host
     # @return [String, nil]                The generated URL
-    def attachment_url(record, name, *args, fallback: nil, **opts)
-      file = record && record.public_send(name)
-      if file
-        Refile.attachment_url(record, name, *args, **opts)
-      elsif fallback
-        asset_url(fallback)
-      end
+    def attachment_url(record, name, *args, **opts)
+      Refile.attachment_url(record, name, *args, **opts)
     end
 
     # Generates an image tag for the given attachment, adding appropriate
@@ -48,12 +36,12 @@ module Refile
     # @param [Hash] options                      Additional options for the image tag
     # @see #attachment_url
     # @return [ActiveSupport::SafeBuffer, nil]   The generated image tag
-    def attachment_image_tag(record, name, *args, fallback: nil, host: nil, prefix: nil, format: nil, **options)
-      file = record && record.public_send(name)
-      classes = ["attachment", (record.class.model_name.singular if record), name, *options[:class]]
+    def attachment_image_tag(record, name, *args, fallback: nil, format: nil, host: nil, **options)
+      file = record.send(name)
+      classes = ["attachment", record.class.model_name.singular, name, *options[:class]]
 
       if file
-        image_tag(attachment_url(record, name, *args, host: host, prefix: prefix, format: format), options.merge(class: classes))
+        image_tag(attachment_url(record, name, *args, format: format, host: host), options.merge(class: classes))
       elsif fallback
         classes << "fallback"
         image_tag(fallback, options.merge(class: classes))
@@ -75,50 +63,23 @@ module Refile
     def attachment_field(object_name, method, object:, **options)
       options[:data] ||= {}
 
-      definition = object.send(:"#{method}_attachment_definition")
-      options[:accept] = definition.accept
+      attacher = object.send(:"#{method}_attacher")
+      options[:accept] = attacher.accept
 
       if options[:direct]
-        url = Refile.attachment_upload_url(object, method, host: options[:host], prefix: options[:prefix])
+        host = options[:host] || Refile.host || request.base_url
+        backend_name = Refile.backends.key(attacher.cache)
+
+        url = ::File.join(host, main_app.refile_app_path, backend_name)
         options[:data].merge!(direct: true, as: "file", url: url)
       end
 
-      if options[:presigned] and definition.cache.respond_to?(:presign)
-        url = Refile.attachment_presign_url(object, method, host: options[:host], prefix: options[:prefix])
-        options[:data].merge!(direct: true, presigned: true, url: url)
+      if options[:presigned] and attacher.cache.respond_to?(:presign)
+        options[:data].merge!(direct: true).merge!(attacher.cache.presign.as_json)
       end
 
-      options[:data][:reference] = SecureRandom.hex
-      options[:include_hidden] = false
-
-      attachment_cache_field(object_name, method, object: object, **options) + file_field(object_name, method, options)
-    end
-
-    # Generates a hidden form field which tracks the id of the file in the cache
-    # before it is permanently stored.
-    #
-    # @param object_name                    The name of the object to generate a field for
-    # @param method                         The name of the field
-    # @param [Hash] options
-    # @option options [Object] object       Set by the form builder
-    # @return [ActiveSupport::SafeBuffer]   The generated hidden form field
-    def attachment_cache_field(object_name, method, object:, **options)
-      options[:data] ||= {}
-      options[:data][:reference] ||= SecureRandom.hex
-
-      attacher_value = object.send("#{method}_data")
-
-      hidden_options = {
-        multiple: options[:multiple],
-        value: attacher_value.try(:to_json),
-        object: object,
-        disabled: attacher_value.blank?,
-        id: nil,
-        data: { reference: options[:data][:reference] }
-      }
-      hidden_options.merge!(index: options[:index]) if options.key?(:index)
-
-      hidden_field(object_name, method, hidden_options)
+      html = hidden_field(object_name, method, value: attacher.data.to_json, object: object, id: nil)
+      html + file_field(object_name, method, options)
     end
   end
 end

@@ -1,73 +1,8 @@
-# master
-
-- [ADDED] Allow to keep uploaded files when the record is destroyed #362
-- [ADDED] Make Refile::FileDouble available to users #394
-- [ADDED] Rails 5 support #411 #483 #529
-- [ADDED] Return URL of the just uploaded file in JSON #440
-- [ADDED] Return presigned URL from S3 #479
-- [ADDED] Make attachment\_cache\_field public #480
-- [ADDED] Allow to specify attachment extensions via Proc #494
-- [ADDED] Expirable download links #518
-- [ADDED] Disallow zero byte files #546
-
-- [FIXED] Improve README #356 #389 #430 #436 #444 #448 #468 #533
-- [FIXED] Fix validates\_presence\_of for attachments #359
-- [FIXED] Fix usage of atachment\_field on nested forms #406
-- [FIXED] Remove metadata while removing attachment #407
-- [FIXED] Prevent "Too many open files" by closing the cache files after upload #415
-- [FIXED] Allow rest-client 1.8, 2.0 and 2.1 #547
-- [FIXED] Respect special chars in the original filename a53308a12f0ba8bc8e473e3513749afc311f9ff3
-- [FIXED] Allow assign file to non trackable attribute #558
-- [FIXED] Avoid extension duplication by specifying format #381
-
-# 0.6.2
-
-Release date: 2015-10-29
-
-- [CHANGED] Removed must-revalidate header, since it serves no purpose
-
-# 0.6.1
-
-Release date: 2015-09-11
-
-- [FIXED] Include missing files in gem bundle
-
-# 0.6.0
-
-Release date: 2015-09-10
-
-- [BREAKING] `Refile.direct_upload` has been renamed to `Refile.allow_uploads_to`.
-- [BREAKING] `Refile.mount_point` no longer implicitly adds a leading slash.
-- [BREAKING] Attachment URLs are now signed, it is no longer possible to generate them client-side
-- [BREAKING] S3 support has been extracted to a separate gem, see https://github.com/refile/refile-s3
-- [BREAKING] MiniMagick support has been extracted to a separate gem, see https://github.com/refile/refile-mini_magick
-- [ADDED] `Refile.cdn_host` and `Refile.app_host`, since not all parts of a Refile should run behind a CDN
-- [ADDED] Support for multiple file uploads via `accepts_attachments_for`
-- [ADDED] Supports JRuby 9.0.0.0 and up
-- [ADDED] Backends can configure what they consider a valid ID
-- [ADDED] Refile files are rewindable
-- [ADDED] Added shortcut to generate URLs to model
-- [ADDED] `Refile.file_url` to generate a URL to a file without an attachment
-- [ADDED] `attachment_url` can take a fallback
-- [ADDED] Support for simple_form
-- [FIXED] Multiple validation errors caused problems for attachment fields
-- [FIXED] Using Refile with nested forms
-- [FIXED] Problem finding hidden field when field is wrapped in error div
-- [FIXED] Incorrect filename is sometimes extracted
-- [FIXED] Make sure temporary files are flushed to disk
-- [DEPRECATED] `Refile.host` is deprecated in favour of `Refile.cdn_host`
-
 # 0.5.5
 
 Release date: 2015-05-19
 
 - [FIXED] Upgrade rest-client version due to security concerns.
-
-# 0.5.4
-
-Release date: 2015-04-14
-
-- [FIXED] [Critical security issue](https://groups.google.com/forum/#!topic/ruby-security-ann/VIfMO2LvzNs).
 
 # 0.5.3
 
